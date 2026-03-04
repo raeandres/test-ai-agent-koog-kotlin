@@ -5,6 +5,8 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.core.tools.reflect.tool
+import ai.koog.agents.features.eventHandler.feature.EventHandler
+import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
@@ -56,7 +58,24 @@ suspend fun main() {
         llmModel = model,
         toolRegistry = toolRegistry,
         systemPrompt = "You're a banking assistant. Accompany the user with their request."
-    )
+    ) {
+//        handleEvents {  }
+        install(EventHandler) {
+             onBeforeLLMCall { ctx ->
+                 println("Request to LLM:")
+                 println("     # Messages:")
+                 ctx.prompt.messages.forEach { println("    - $it") }
+                 println("     # Tools:")
+                 ctx.tools.forEach { println("    - $it") }
+             }
+            onAfterLLMCall { ctx ->
+                println("Response from LLM:")
+                ctx.tools.forEach { println("    - $it") }
+
+            }
+
+        }
+    }
 
     val userMessage = "Send 25 pesos to Daniel for dinner at the restaurant"
 
